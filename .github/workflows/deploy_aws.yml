@@ -30,6 +30,10 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
+
+    - name: Debug files
+      run: ls -la ./project-2-cicd-pipeline
+
     
     - name: Setup Node.js
       uses: actions/setup-node@v4
