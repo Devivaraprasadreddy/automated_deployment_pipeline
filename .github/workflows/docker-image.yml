@@ -46,7 +46,7 @@ jobs:
     
     - name: Test Docker build
       run: |
-        cd project-2-cicd-pipeline
+        
         docker build -t test-build .
         echo "Docker build successful!"
 
@@ -58,7 +58,7 @@ jobs:
     
     defaults:
       run:
-        working-directory: ./project-2
+        working-directory: ./project-2-cicd-pipeline
     
     steps:
     - name: Checkout code
