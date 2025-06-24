@@ -57,16 +57,15 @@ jobs:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG project-2-cicd-pipeline
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:project-2-cicd-image project-2-cicd-pipeline
 
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:latest project-2-cicd-pipeline
-          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
-        
-          # Push to ECR
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:project-2-cicd-image $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          #push to ECR
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:project-2-cicd-image
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
         
-          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:project-2-cicd-image" >> $GITHUB_OUTPUT
   
 
       # - name: ✅ Build and push Docker image to ECR
