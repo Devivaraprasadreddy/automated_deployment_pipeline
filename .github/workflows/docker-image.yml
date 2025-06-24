@@ -46,6 +46,7 @@ jobs:
     
     - name: Test Docker build
       run: |
+        cd project-2-cicd-pipeline
         docker build -t test-build .
         echo "Docker build successful!"
 
