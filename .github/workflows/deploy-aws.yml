@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'automated_deployment_pipeline/**'  # Only run when project-2 changes
+      - 'project-2/**'  # Only run when project-2 changes
   pull_request:
     branches: [main]
     paths:
@@ -25,7 +25,7 @@ jobs:
     
     defaults:
       run:
-        working-directory: ./automated_deployment_pipeline  # Set working directory for all steps
+        working-directory: ./automated_deployment_pipeline # Set working directory for all steps
     
     steps:
     - name: Checkout code
@@ -57,7 +57,7 @@ jobs:
     
     defaults:
       run:
-        working-directory: ./automated_deployment_pipeline
+        working-directory: ./project-2
     
     steps:
     - name: Checkout code
@@ -100,7 +100,7 @@ jobs:
       id: task-def
       uses: aws-actions/amazon-ecs-render-task-definition@v1
       with:
-        task-definition: ./automated_deployment_pipeline/task-definition.json  # Specify full path
+        task-definition: ./project-2/task-definition.json  # Specify full path
         container-name: webapp  # Make sure this matches your container name in task definition
         image: ${{ steps.build-image.outputs.image }}
     
