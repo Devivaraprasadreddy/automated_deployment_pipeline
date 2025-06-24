@@ -75,7 +75,7 @@ jobs:
       uses: aws-actions/amazon-ecr-login@v2
       
     - name: Verify Dockerfile exists
-      run: ls -l project-2-cicd-pipeline/Dockerfile
+      run: ls -l /automated_deployment_pipeline/project-2-cicd-pipeline/Dockerfile
   
     
     - name: Build, tag, and push image to Amazon ECR
