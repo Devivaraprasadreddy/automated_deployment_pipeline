@@ -4,7 +4,7 @@
 set -e  # Exit on any error
 
 # Configuration variables
-CLUSTER_NAME="webapp-cicd-cluster"
+CLUSTER_NAME="my-ecs-cluster"
 SERVICE_NAME="webapp-cicd-service"
 TASK_FAMILY="webapp-cicd-task"
 ECR_REPOSITORY="my-webapp"
