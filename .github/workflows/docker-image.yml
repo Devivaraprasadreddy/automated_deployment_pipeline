@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'project-2/**'  # Only run when project-2 changes
+      - 'project-2-cicd-pipeline/**'  # Only run when project-2 changes
   pull_request:
     branches: [main]
     paths:
