@@ -1,4 +1,4 @@
-name: Deploy to Amazon ECS new
+name: Deploy to Amazon ECS
 
 on:
   push:
@@ -39,7 +39,7 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
-      - name: Debug registry and tag
+      - name: ✅ Debug registry and tag
         run: |
           echo "REGISTRY: $ECR_REGISTRY"
           echo "REPOSITORY: $ECR_REPOSITORY"
@@ -49,56 +49,26 @@ jobs:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
           IMAGE_TAG: ${{ github.sha }}
-  
 
-      - name: Build, tag, and push image to Amazon ECR
+      - name: ✅ Build, tag, and push image to ECR
         id: build-image
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG project-2-cicd-pipeline
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
           IMAGE_TAG: ${{ github.sha }}
-        run: |
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG project-2-cicd-pipeline
-
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:latest project-2-cicd-pipeline
-          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
-          #push to ECR
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
-        
-          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
-  
-
-      # - name: ✅ Build and push Docker image to ECR
-      #   working-directory: project-2-cicd-pipeline
-      #   env:
-      #     ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-      #     ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
-      #     IMAGE_TAG: ${{ github.sha }}
-      #   run: |
-      #     docker buildx build project-2-cicd-pipeline \
-      #       -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
-      #       -t $ECR_REGISTRY/$ECR_REPOSITORY:latest \
-      #       --push
-      #     echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT  
-
-          
-
-          # docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          # docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
-
-          # echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
       - name: 🔍 Debug ECS Cluster & Service
         run: |
           echo "ECS_CLUSTER: $ECS_CLUSTER"
           echo "ECS_SERVICE: $ECS_SERVICE"
           echo "AWS_REGION: $AWS_REGION"
-
-          echo "Checking cluster..."
           aws ecs describe-clusters --clusters $ECS_CLUSTER --region $AWS_REGION
-
-          echo "Checking service..."
           aws ecs describe-services --cluster $ECS_CLUSTER --services $ECS_SERVICE --region $AWS_REGION
         env:
           AWS_REGION: ${{ secrets.AWS_REGION }}
@@ -106,75 +76,71 @@ jobs:
           ECS_SERVICE: ${{ secrets.ECS_SERVICE }}
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-    
 
-      - name: Create service if it doesn't exist
+      - name: ✅ Create or Update ECS Service
         run: |
-            SERVICE_EXISTS=$(aws ecs describe-services --cluster $ECS_CLUSTER --services $ECS_SERVICE --region $AWS_REGION --query "services[0].status" --output text 2>/dev/null || echo "MISSING")
-            if [ "$SERVICE_EXISTS" = "MISSING" ] || [ "$SERVICE_EXISTS" = "None" ]; then
-              echo "Creating new ECS service..."
-              aws ecs create-service \
-               --cluster $ECS_CLUSTER \
-               --service-name $ECS_SERVICE \
+          SERVICE_EXISTS=$(aws ecs describe-services --cluster $ECS_CLUSTER --services $ECS_SERVICE --region $AWS_REGION --query "services[0].status" --output text 2>/dev/null || echo "MISSING")
+
+          if [ "$SERVICE_EXISTS" = "MISSING" ] || [ "$SERVICE_EXISTS" = "None" ]; then
+            echo "Creating new ECS service..."
+            aws ecs create-service \
+              --cluster $ECS_CLUSTER \
+              --service-name $ECS_SERVICE \
               --task-definition $ECS_TASK_DEFINITION \
               --desired-count 1 \
               --launch-type FARGATE \
-              --network-configuration "awsvpcConfiguration={subnets=[subnet-xxxx,subnet-yyyy],securityGroups=[sg-zzzzzz],assignPublicIp=ENABLED}" \
+              --network-configuration "awsvpcConfiguration={subnets=[subnet-0546a818f55b5c8b4],securityGroups=[sg-0141ff0e4b5e4e468],assignPublicIp=ENABLED}" \
               --region $AWS_REGION
-            else
-              echo "Service exists. Updating..."
+          else
+            echo "Service exists. Updating..."
             aws ecs update-service \
               --cluster $ECS_CLUSTER \
               --service $ECS_SERVICE \
               --task-definition $ECS_TASK_DEFINITION \
               --force-new-deployment \
               --region $AWS_REGION
-            fi
-            env:
-              AWS_REGION: ${{ secrets.AWS_REGION }}
-              ECS_CLUSTER: ${{ secrets.ECS_CLUSTER }}
-              ECS_SERVICE: ${{ secrets.ECS_SERVICE }}
-              ECS_TASK_DEFINITION: ${{ secrets.ECS_TASK_DEFINITION }}
-              AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-              AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          fi
+        env:
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          ECS_CLUSTER: ${{ secrets.ECS_CLUSTER }}
+          ECS_SERVICE: ${{ secrets.ECS_SERVICE }}
+          ECS_TASK_DEFINITION: ${{ secrets.ECS_TASK_DEFINITION }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
-
-      - name: Get Application URL
+      - name: 🌐 Get Application URL
         run: |
           echo "Waiting for service to stabilize..."
           sleep 30
-        
-          # Get the public IP of the running task
-           TASK_ARN=$(aws ecs list-tasks \
+
+          TASK_ARN=$(aws ecs list-tasks \
             --cluster $ECS_CLUSTER \
             --service-name $ECS_SERVICE \
             --query 'taskArns[0]' \
             --output text)
-        
+
           if [ "$TASK_ARN" != "None" ] && [ "$TASK_ARN" != "" ]; then
-            # Get network interface ID
             NETWORK_INTERFACE_ID=$(aws ecs describe-tasks \
               --cluster $ECS_CLUSTER \
               --tasks $TASK_ARN \
               --query 'tasks[0].attachments[0].details[?name==`networkInterfaceId`].value' \
               --output text)
-          
-            # Get public IP
+
             PUBLIC_IP=$(aws ec2 describe-network-interfaces \
               --network-interface-ids $NETWORK_INTERFACE_ID \
               --query 'NetworkInterfaces[0].Association.PublicIp' \
               --output text)
-          
+
             echo ""
             echo "🚀 Deployment successful!"
-            echo "📱 Your app is live at: http://$PUBLIC_IP:3001"
-            echo "🏥 Health check: http://$PUBLIC_IP:3001/health"
-            echo "📊 API endpoint: http://$PUBLIC_IP:3001/api/info"
-            echo ""
-            echo "📋 AWS Console Links:"
-            echo "ECS Service: https://console.aws.amazon.com/ecs/home?region=$AWS_REGION#/clusters/$ECS_CLUSTER/services/$ECS_SERVICE"
-            echo "CloudWatch Logs: https://console.aws.amazon.com/cloudwatch/home?region=$AWS_REGION#logsV2:log-groups/log-group/%2Fecs%2F$ECS_TASK_DEFINITION"
-            echo ""
+            echo "📱 App URL: http://$PUBLIC_IP:3001"
+            echo "🏥 Health Check: http://$PUBLIC_IP:3001/health"
           else
-            echo "❌ Could not get task information. Check ECS console for details."
+            echo "❌ Could not get ECS task info. Please check ECS console."
           fi
+        env:
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          ECS_CLUSTER: ${{ secrets.ECS_CLUSTER }}
+          ECS_SERVICE: ${{ secrets.ECS_SERVICE }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
