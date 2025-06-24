@@ -4,11 +4,11 @@ on:
   push:
     branches: [main]
     paths:
-      - 'project-2/**'  # Only run when project-2 changes
+      - 'automated_deployment_pipeline/**'  # Only run when project-2 changes
   pull_request:
     branches: [main]
     paths:
-      - 'project-2-cicd-pipeline/**'
+      - 'automated_deployment_pipeline/**'
   workflow_dispatch:  # Manual triggering
 
 env:
