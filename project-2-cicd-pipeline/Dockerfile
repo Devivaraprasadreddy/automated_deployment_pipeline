@@ -1,4 +1,4 @@
-# This tells Docker how to package your app
+# This tells Docker how to package your app 
 
 FROM node:18-alpine
 WORKDIR /app
