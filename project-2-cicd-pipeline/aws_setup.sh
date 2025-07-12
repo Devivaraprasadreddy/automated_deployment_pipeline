@@ -1,5 +1,5 @@
 #!/bin/bash
-# AWS Infrastructure Setup for CI/CD Pipeline
+# AWS Infrastructure Setup for CI/CD Pipeline 
 
 set -e  # Exit on any error
 
